@@ -98,7 +98,7 @@ PrivateData = @{
         # Tags = @()
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        # LicenseUri = 'https://github.com/vmkdaily/EsxRunspace/blob/master/LICENSE.md'
 
         # A URL to the main website for this project.
         # ProjectUri = ''
