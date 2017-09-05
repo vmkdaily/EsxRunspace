@@ -33,7 +33,7 @@ Copyright = '(c) 2017 vmkdaily. MIT.'
 Description = 'Connects to one or more VMware ESX hosts using PowerShell Runspace jobs'
 
 # Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '5.1'
+PowerShellVersion = '3.0'
 
 # Name of the Windows PowerShell host required by this module
 # PowerShellHostName = ''
