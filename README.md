@@ -53,7 +53,7 @@ PARAMETERS
         
     -IncludeModule <String[]>
         String. The Include parameter allows adding one or more modules and/or functions
-        to the Runspace for each ESX conenction. By default we include 'VMware.PowerCLI.Core'.
+        to the Runspace for each ESX connection. By default we include 'VMware.PowerCLI.Core'.
         If you are working with VDS for example, then populate the Include with 'VMware.VimAutomation.Vds'.
         When using Include, this implies that you will edit the script to add desired datapoints to the
         returned object.
