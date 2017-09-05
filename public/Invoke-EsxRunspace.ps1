@@ -200,4 +200,4 @@ Function Invoke-EsxRunspace {
       Write-Warning -Message 'No report results!'
     }
   } #End Process
-} #End Process
+} #End Function
