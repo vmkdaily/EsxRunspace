@@ -13,7 +13,8 @@ SYNOPSIS
 
 
 SYNTAX
-    Invoke-EsxRunspace [[-VMHost] <String[]>] [[-Credential] <PSCredential>] [[-IncludeModule] <String[]>] [-Brief] [-PassThru] [<CommonParameters>]
+    Invoke-EsxRunspace [[-VMHost] <String[]>] [[-Credential] <PSCredential>] [[-IncludeModule] <String[]>]
+    [-Brief] [-PassThru] [<CommonParameters>]
 
 
 DESCRIPTION
