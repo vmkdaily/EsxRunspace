@@ -35,7 +35,7 @@ Function Invoke-EsxRunspace {
 
       .PARAMETER IncludeModule
         String. The Include parameter allows adding one or more modules and/or functions
-        to the Runspace for each ESX conenction. By default we include 'VMware.PowerCLI.Core'.
+        to the Runspace for each ESX connection. By default we include 'VMware.PowerCLI.Core'.
         If you are working with VDS for example, then populate the Include with 'VMware.VimAutomation.Vds'.
         When using Include, this implies that you will edit the script to add desired datapoints to the
         returned object.
@@ -99,7 +99,7 @@ Function Invoke-EsxRunspace {
     #PSCredential.  Login for ESX (i.e. root).
     [PSCredential]$Credential,
 
-      #String.  Optionally, enter one or more modules and/or functions to include in the Esx Runspace.
+    #String.  Optionally, enter one or more modules and/or functions to include in the Esx Runspace.
     [Alias('Include')]
     [string[]]$IncludeModule,
     
@@ -154,7 +154,7 @@ Function Invoke-EsxRunspace {
           Write-Error -Message ('{0}' -f $_.Exception.Message)
         }
 
-        #Get the ESX Object and VM counts
+        #Get the ESX Object
         $Script:EsxImpl = Get-VMHost -Server $esx
         
         #Populate report object
