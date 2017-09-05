@@ -55,12 +55,6 @@ Function Invoke-EsxRunspace {
 
       .EXAMPLE
       $CredsESX = Get-Credential root
-      Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX -ScriptText 'Get-VMHost | Select Name,State'
-      Save a credential to a variable and then connect to a single ESX host,
-      running a custom command.
-
-      .EXAMPLE
-      $CredsESX = Get-Credential root
       $EsxList = @('esx01.lab.local', 'esx02.lab.local', 'esx03.lab.local', 'esx04.lab.local')
       Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
 
