@@ -67,14 +67,13 @@ PARAMETERS
 
 ```
 #### Examples
-```
--------------------------- EXAMPLE 1 --------------------------
+```-------------------------- EXAMPLE 1 --------------------------
 
-PS C:\>$CredsESX = Get-Credential root
+PS C:\>Invoke-EsxRunspace -VMHost esx01.lab.local -Credential (Get-Credential)
 
-Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX
-Save a credential to a variable and then connect to a single ESX host,
+This example prompts for credentials and then connects to an ESX host
 running the default commands in the function.
+
 
 -------------------------- EXAMPLE 2 --------------------------
 
@@ -82,34 +81,34 @@ PS C:\>$CredsESX = Get-Credential root
 
 $EsxList = @('esx01.lab.local', 'esx02.lab.local', 'esx03.lab.local', 'esx04.lab.local')
 Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
+This example creates a variable to hold an array of ESX host names.  We then run the report
+against that array which creates a Runspace job per host.
 
 
 -------------------------- EXAMPLE 3 --------------------------
 
 PS C:\>$CredsESX = Get-Credential root
 
-$ServerList = 'c:\servers.txt' #Esx hosts, one per line
-Invoke-EsxRunspace -VMHost $ServerList -Credential $credsESX -Include 'VMware.VimAutomation.vROps'
-Save a credential to a variable and then connect to a single ESX host.
-This example shows how to import an additional module to the ESX runspace.
+Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX -Include 'VMware.VimAutomation.vROps'
+This example saves a credential to variable and then connects to a single ESX host.
+This example also shows how to import an additional module to the ESX runspace.
 
 
 -------------------------- EXAMPLE 4 --------------------------
 
 PS C:\>$CredsESX = Get-Credential root
 
-$ServerList = 'c:\servers.txt' #Esx hosts, one per line
-Invoke-EsxRunspace -VMHost $ServerList -Credential $credsESX -Include 'c:\scripts\Invoke-MyCoolFunction.ps1'
-Save a credential to a variable and then connect to a single ESX host.
-This example shows how to import an additional function to the ESX runspace.
+Invoke-EsxRunspace -VMHost (gc 'c:\servers.txt') -Credential $credsESX -Include 'c:\scripts\Invoke-MyCoolFunction.ps1'
+This example saves a credential to variable and then connects to a list of ESX hosts read in from a text file.
+This example also shows how to import an additional function to the ESX runspace.
 
 
 -------------------------- EXAMPLE 5 --------------------------
 
 PS C:\>$credsLabESX = Get-Credential root
 
-$LabEsx = @('esx01.lab.local','esx02.lab.local','esx03.lab.local','esx04.lab.local')
-$report = Invoke-EsxRunspace -VMHost $LabEsx -Credential $credsLabESX
+$EsxList = @('esx01.lab.local','esx02.lab.local','esx03.lab.local','esx04.lab.local')
+$report = Invoke-EsxRunspace -VMHost $EsxList -Credential $credsLabESX
 $report | select -First 1
 
 Name          : esx01.lab.local
@@ -120,4 +119,8 @@ Model         : MacPro6,1
 MemoryTotalGB : 64
 NumCpu        : 4
 ProcessorType : Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz
+
+This example shows how to save the output to a variable.  We can then look at just one object,
+or all.  We can also pipe $report to Out-GridView or Export-Csv of course.
+
 ```
