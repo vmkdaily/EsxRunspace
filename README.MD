@@ -5,7 +5,6 @@ This doesn't make it go faster (or maybe it does!).  Try it out.
 
 #### Help
 ```
-PS C:\> help Invoke-EsxRunspace -full
 
 NAME
     Invoke-EsxRunspace
