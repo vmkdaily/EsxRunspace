@@ -6,6 +6,20 @@ This doesn't make it go faster (or maybe it does!).  Try it out.
 #### Help
 ```
 
+PS C:\> Import-Module c:\temp\EsxRunspace -Verbose
+VERBOSE: Loading module from path 'c:\temp\EsxRunspace\EsxRunspace.psd1'.
+VERBOSE: Loading module from path 'c:\temp\EsxRunspace\EsxRunspace.psm1'.
+VERBOSE: Importing function 'Invoke-EsxRunspace'.
+PS C:\>
+PS C:\> gcm -Module EsxRunspace
+
+CommandType     Name                                               Version    Source
+-----------     ----                                               -------    ------
+Function        Invoke-EsxRunspace                                 1.0.0.1    EsxRunspace
+
+PS C:\>
+PS C:\> help Invoke-EsxRunspace -Full
+
 NAME
     Invoke-EsxRunspace
 
@@ -13,114 +27,125 @@ SYNOPSIS
 
 
 SYNTAX
-    Invoke-EsxRunspace [[-VMHost] <String[]>] [[-Credential] <PSCredential>] [[-IncludeModule] <String[]>]
-    [-Brief] [-PassThru] [<CommonParameters>]
+    Invoke-EsxRunspace [[-VMHost] <String[]>] [-Credential] <PSCredential> [-Brief] [-PassThru] [<CommonParameters>]
 
 
 DESCRIPTION
     Connects to one or more VMware ESX hosts using PowerShell Runspace jobs.
     Returns a default report with basic ESX info.
 
-NOTES
 
-
-        Script:           Invoke-EsxRunspace.ps1
-        Author:           Mike Nisk
-        Requires:         The PoshRSJob module by Bo Prox.
-                          https://github.com/proxb/PoshRSJob
-
-                          If you do not have the above module:
-                          Install-Module -Name PoshRSJob
-
-                          To load the module (if needed):
-                          Get-Module -ListAvailable -Name PoshRSJob | Import-Module
-
-        Prior Art:        The syntax used herein for Start-RSJob is based on VMTN thread:
-                          https://communities.vmware.com/thread/513253
-
-        Tested Versions:  Older versions should work fine, but this was tested on:
-                          Microsoft PowerShell 5.1
-                          VMware PowerCLI 6.5.2
-                          PoshRSJob 1.7.3.9
-                          ESXi 6.0 U2
-                          
 PARAMETERS
     -VMHost <String[]>
         String. IP Address or DNS Name of one or more ESX hosts.
 
+        Required?                    false
+        Position?                    1
+        Default value
+        Accept pipeline input?       false
+        Accept wildcard characters?  false
+
     -Credential <PSCredential>
-        PSCredential. The login credential for ESX
-        
-    -IncludeModule <String[]>
-        String. The Include parameter allows adding one or more modules and/or functions
-        to the Runspace for each ESX connection. By default we include 'VMware.VimAutomation.Core'.
-        If you are working with VDS for example, then populate the Include with 'VMware.VimAutomation.Vds'.
-        When using Include, this implies that you will edit the script to add desired datapoints to the
-        returned object.
+        PSCredential. The login credential for ESX.
+
+        Required?                    true
+        Position?                    2
+        Default value
+        Accept pipeline input?       false
+        Accept wildcard characters?  false
 
     -Brief [<SwitchParameter>]
         Switch.  Returns a small set of properties (Name, Version, and State).
+
+        Required?                    false
+        Position?                    named
+        Default value                False
+        Accept pipeline input?       false
+        Accept wildcard characters?  false
 
     -PassThru [<SwitchParameter>]
         Switch. Use the PassThru switch for greater detail on returned object.
         Does not format or sort by design.
 
-```
-#### Examples
-```-------------------------- EXAMPLE 1 --------------------------
+        Required?                    false
+        Position?                    named
+        Default value                False
+        Accept pipeline input?       false
+        Accept wildcard characters?  false
 
-PS C:\>Invoke-EsxRunspace -VMHost esx01.lab.local -Credential (Get-Credential)
+    <CommonParameters>
+        This cmdlet supports the common parameters: Verbose, Debug,
+        ErrorAction, ErrorVariable, WarningAction, WarningVariable,
+        OutBuffer, PipelineVariable, and OutVariable. For more information, see
+        about_CommonParameters (https:/go.microsoft.com/fwlink/?LinkID=113216).
 
-This example prompts for credentials and then connects to an ESX host
-running the default commands in the function.
-
-
--------------------------- EXAMPLE 2 --------------------------
-
-PS C:\>$CredsESX = Get-Credential root
-
-$EsxList = @('esx01.lab.local', 'esx02.lab.local', 'esx03.lab.local', 'esx04.lab.local')
-Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
-This example creates a variable to hold an array of ESX host names.  We then run the report
-against that array which creates a Runspace job per host.
+INPUTS
+    none
 
 
--------------------------- EXAMPLE 3 --------------------------
-
-PS C:\>$CredsESX = Get-Credential root
-
-Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX -Include 'VMware.VimAutomation.vROps'
-This example saves a credential to variable and then connects to a single ESX host.
-This example also shows how to import an additional module to the ESX runspace.
+OUTPUTS
+    Object
 
 
--------------------------- EXAMPLE 4 --------------------------
-
-PS C:\>$CredsESX = Get-Credential root
-
-Invoke-EsxRunspace -VMHost (gc 'c:\servers.txt') -Credential $credsESX -Include 'c:\scripts\Invoke-MyCoolFunction.ps1'
-This example saves a credential to variable and then connects to a list of ESX hosts read in from a text file.
-This example also shows how to import an additional function to the ESX runspace.
+NOTES
 
 
--------------------------- EXAMPLE 5 --------------------------
+        Script:           Invoke-EsxRunspace.ps1
+        Author:           Mike Nisk
+        Prior Art:        Start-RSJob syntax based on VMTN thread:
+                          https://communities.vmware.com/thread/513253
 
-PS C:\>$credsLabESX = Get-Credential root
+        Tested Versions:  Microsoft PowerShell 5.1 (supports 4.0 and later)
+                          VMware PowerCLI 6.5.2 (PowerCLI 10.x preferred)
+                          PoshRSJob 1.7.3.9
+                          ESXi 6.0 U2
 
-$EsxList = @('esx01.lab.local','esx02.lab.local','esx03.lab.local','esx04.lab.local')
-$report = Invoke-EsxRunspace -VMHost $EsxList -Credential $credsLabESX
-$report | select -First 1
+    -------------------------- EXAMPLE 1 --------------------------
 
-Name          : esx01.lab.local
-State         : Connected
-Version       : 6.0.0
-Manufacturer  : Apple Inc.
-Model         : MacPro6,1
-MemoryTotalGB : 64
-NumCpu        : 4
-ProcessorType : Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz
+    PS C:\>$CredsESX = Get-Credential root
 
-This example shows how to save the output to a variable.  We can then look at just one object,
-or all.  We can also pipe $report to Out-GridView or Export-Csv of course.
+    Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX
+    Save a credential to a variable and then connect to a single ESX host,
+    running the default commands in the function.
+
+
+
+
+    -------------------------- EXAMPLE 2 --------------------------
+
+    PS C:\>$CredsESX = Get-Credential root
+
+    $EsxList = @('esx01.lab.local', 'esx02.lab.local', 'esx03.lab.local', 'esx04.lab.local')
+    Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
+
+
+
+
+    -------------------------- EXAMPLE 3 --------------------------
+
+    PS C:\>$credsESX = Get-Credential root
+
+    $report = Invoke-EsxRunspace -VMHost (gc $home/esx-list.txt) -Credential $credsESX
+    $report | select -First 1
+
+    Name          : esx01.lab.local
+    State         : Connected
+    Version       : 6.0.0
+    Manufacturer  : Apple Inc.
+    Model         : MacPro6,1
+    MemoryTotalGB : 64
+    NumCpu        : 4
+    ProcessorType : Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz
+
+
+
+
+
+RELATED LINKS
+
+
+
+
+PS C:\>
 
 ```

@@ -1,0 +1,19 @@
+
+#>
+
+## Expected login events on ESXi.
+## The IP address listed will be your client.
+## A good practice during initial testing is to confirm that you see both the "logged in" and "logged out" events.
+
+User root@10.1.2.3 logged out (login time: 8/29/2017 12:33:35 AM, number of API invocations: 0, user agent: 
+PowerCLI/6.5.1.5377412)
+info
+8/29/2017 12:34:01 AM
+root
+
+User root@10.1.2.3 logged in as PowerCLI/6.5.1.5377412
+info
+8/29/2017 12:33:35 AM
+root
+
+#>

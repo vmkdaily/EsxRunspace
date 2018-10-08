@@ -2,8 +2,8 @@
     ===========================================================================
     Author:       	Mike Nisk
     Filename:     	EsxRunspace.psm1
-    Version:        0.1.0
-    Generated on:   8/26/2017
+    Version:        1.0.0.1
+    Generated on:   08Oct2018
     -------------------------------------------------------------------------
     Module Name:    Esxrunspace
     ===========================================================================
@@ -24,8 +24,7 @@ foreach ($FunctionFile in @($Public + $Private)) {
 
     }
     catch {
-        Write-Error -Message $Error[0].exception.Message
-        #Write-Error -Message "Failed to import function $($FunctionFile.fullname): $_"
+      Write-Error -Message "Failed to import function $($FunctionFile.fullname): $_"
     }
 }
 

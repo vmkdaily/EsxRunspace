@@ -1,4 +1,5 @@
 ﻿#requires -Version 3
+#Requires -Modules PoshRSJob,VMware.VimAutomation.Core
 Function Invoke-EsxRunspace {
   <#
 
@@ -9,21 +10,11 @@ Function Invoke-EsxRunspace {
       .NOTES
         Script:           Invoke-EsxRunspace.ps1
         Author:           Mike Nisk
-        Requires:         The PoshRSJob module by Bo Prox.
-                          https://github.com/proxb/PoshRSJob
-
-                          If you do not have the above module:
-                          Install-Module -Name PoshRSJob
-
-                          To load the module (if needed):
-                          Get-Module -ListAvailable -Name PoshRSJob | Import-Module
-
-        Prior Art:        The syntax used herein for Start-RSJob is based on VMTN thread:
+        Prior Art:        Start-RSJob syntax based on VMTN thread:
                           https://communities.vmware.com/thread/513253
 
-        Tested Versions:  Older versions should work fine, but this was tested on:
-                          Microsoft PowerShell 5.1
-                          VMware PowerCLI 6.5.2
+        Tested Versions:  Microsoft PowerShell 5.1 (supports 4.0 and later)
+                          VMware PowerCLI 6.5.2 (PowerCLI 10.x preferred)
                           PoshRSJob 1.7.3.9
                           ESXi 6.0 U2
 
@@ -31,14 +22,7 @@ Function Invoke-EsxRunspace {
         String. IP Address or DNS Name of one or more ESX hosts.
 
       .PARAMETER Credential
-        PSCredential. The login credential for ESX
-
-      .PARAMETER IncludeModule
-        String. The Include parameter allows adding one or more modules and/or functions
-        to the Runspace for each ESX connection. By default we include 'VMware.VimAutomation.Core'.
-        If you are working with VDS for example, then populate the Include with 'VMware.VimAutomation.Vds'.
-        When using Include, this implies that you will edit the script to add desired datapoints to the
-        returned object.
+        PSCredential. The login credential for ESX.
 
       .PARAMETER Brief
         Switch.  Returns a small set of properties (Name, Version, and State).
@@ -48,33 +32,19 @@ Function Invoke-EsxRunspace {
         Does not format or sort by design.
 
       .EXAMPLE
-      Invoke-EsxRunspace -VMHost esx01.lab.local -Credential (Get-Credential)
-      This example prompts for credentials and then connects to an ESX host
+      $CredsESX = Get-Credential root
+      Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX
+      Save a credential to a variable and then connect to a single ESX host,
       running the default commands in the function.
 
       .EXAMPLE
       $CredsESX = Get-Credential root
       $EsxList = @('esx01.lab.local', 'esx02.lab.local', 'esx03.lab.local', 'esx04.lab.local')
       Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
-      This example creates a variable to hold an array of ESX host names.  We then run the report
-      against that array which creates a Runspace job per host.
 
       .EXAMPLE
-      $CredsESX = Get-Credential root
-      Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX -Include 'VMware.VimAutomation.vROps'
-      This example saves a credential to variable and then connects to a single ESX host.
-      This example also shows how to import an additional module to the ESX runspace.
-
-      .EXAMPLE
-      $CredsESX = Get-Credential root
-      Invoke-EsxRunspace -VMHost (gc 'c:\servers.txt') -Credential $credsESX -Include 'c:\scripts\Invoke-MyCoolFunction.ps1'
-      This example saves a credential to variable and then connects to a list of ESX hosts read in from a text file.
-      This example also shows how to import an additional function to the ESX runspace.
-
-      .EXAMPLE
-      $credsLabESX = Get-Credential root
-      $EsxList = @('esx01.lab.local','esx02.lab.local','esx03.lab.local','esx04.lab.local')
-      $report = Invoke-EsxRunspace -VMHost $EsxList -Credential $credsLabESX
+      $credsESX = Get-Credential root
+      $report = Invoke-EsxRunspace -VMHost (gc $home/esx-list.txt) -Credential $credsESX
       $report | select -First 1
 
       Name          : esx01.lab.local
@@ -86,44 +56,32 @@ Function Invoke-EsxRunspace {
       NumCpu        : 4
       ProcessorType : Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz
 
-      This example shows how to save the output to a variable.  We can then look at just one object,
-      or all.  We can also pipe $report to Out-GridView or Export-Csv of course.
+      .INPUTS
+      none
+
+      .OUTPUTS
+      Object
   #>
 
   [CmdletBinding()]
   Param(
 
-    #IP Address or DNS name of one or more VMware ESXi hosts
+    #IP Address or DNS name of one or more VMware ESXi hosts.
     [Alias('VMHostList')]
     [string[]]$VMHost,
 
     #PSCredential.  Login for ESX (i.e. root).
+    [Parameter(Mandatory)]
     [PSCredential]$Credential,
-
-    #String.  Optionally, enter one or more modules and/or functions to include in the Esx Runspace.
-    [Alias('Include')]
-    [string[]]$IncludeModule,
     
-    #Switch.  Returns a small set of properties.
+    #Switch. Returns a small set of properties.
     [switch]$Brief,
     
-    #Switch. Use the PassThru switch for greater detail on returned object
+    #Switch. Use the PassThru switch for greater detail on returned object.
     [switch]$PassThru
   )
 
   Process {
-
-    #Create standard modules variable
-    $modules = @()
-    $modules += 'VMware.VimAutomation.Core'
-  
-    #Include additional modules and/or functions if needed
-    If($IncludeModule){
-      $modules += $IncludeModule
-    }
-  
-    #Import the modules and/or functions
-    Get-Module -Name $modules -ListAvailable -ErrorAction SilentlyContinue | Import-Module -Global -ErrorAction SilentlyContinue
 
     #Read in the VMHost parameter (one or more ESX hosts) to create VMHost list
     [System.Collections.Queue]$ServerList = $null
@@ -136,6 +94,7 @@ Function Invoke-EsxRunspace {
     $Report = [System.Collections.ArrayList]::Synchronized( (New-Object -TypeName System.Collections.ArrayList) )
 
     Start-RSJob -ScriptBlock {
+      #requires -Module VMware.Vimautomation.Core
       [CmdletBinding()]
       param(
         $ServerList,
@@ -155,7 +114,7 @@ Function Invoke-EsxRunspace {
           Write-Error -Message ('{0}' -f $_.Exception.Message)
         }
 
-        #Get the ESX Object
+        #Get the ESX Object and VM counts
         $Script:EsxImpl = Get-VMHost -Server $esx
         
         #Populate report object
@@ -178,7 +137,7 @@ Function Invoke-EsxRunspace {
           Write-Error -Message ('{0}' -f $_.Exception.Message)
         }
       }
-    } -ModulesToImport $modules -ArgumentList $ServerList, $Report | Wait-RSJob | Remove-RSJob
+    } -ArgumentList $ServerList, $Report | Wait-RSJob | Remove-RSJob
   
     #Report results in any order
     If($Report){
@@ -191,7 +150,7 @@ Function Invoke-EsxRunspace {
           return $Report | Select-Object -Property Name,State,Version
         }
         Else{
-          #Report results, with formatting. This is the default.
+          #Report results, Default
           return $Report | Select-Object -Property Name,State,Version,Manufacturer,Model,MemoryTotalGB,NumCpu,ProcessorType
         }
       }
@@ -200,4 +159,4 @@ Function Invoke-EsxRunspace {
       Write-Warning -Message 'No report results!'
     }
   } #End Process
-} #End Function
+} #End Process
