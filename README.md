@@ -95,7 +95,7 @@ NOTES
         Prior Art:        Start-RSJob syntax based on VMTN thread:
                           https://communities.vmware.com/thread/513253
 
-        Tested Versions:  Microsoft PowerShell 5.1 (supports 4.0 and later)
+        Tested Versions:  Microsoft PowerShell 5.1 (supports 3.0 and later)
                           VMware PowerCLI 6.5.2 (PowerCLI 10.x preferred)
                           PoshRSJob 1.7.3.9
                           ESXi 6.0 U2
