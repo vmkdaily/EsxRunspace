@@ -1,11 +1,10 @@
 ﻿#requires -Version 3
-#Requires -Modules PoshRSJob,VMware.VimAutomation.Core
+#requires -Modules PoshRSJob,VMware.VimAutomation.Core
 Function Invoke-EsxRunspace {
   <#
 
       .DESCRIPTION
-        Connects to one or more VMware ESX hosts using PowerShell Runspace jobs.
-        Returns a default report with basic ESX info.
+        Connect to one or more VMware ESXi hosts using PowerShell Runspace jobs and return some basic information.
 
       .NOTES
         Script:           Invoke-EsxRunspace.ps1
@@ -19,28 +18,28 @@ Function Invoke-EsxRunspace {
                           ESXi 6.0 U2
 
       .PARAMETER VMHost
-        String. IP Address or DNS Name of one or more ESX hosts.
+        String. The IP Address or DNS Name of one or more VMware ESXi hosts.
 
       .PARAMETER Credential
-        PSCredential. The login credential for ESX.
+        PSCredential. The login for ESXi.
 
       .PARAMETER Brief
-        Switch.  Returns a small set of properties (Name, Version, and State).
+        Switch. Optionally, return a small set of properties (i.e. Name, Version, and State).
 
       .PARAMETER PassThru
         Switch. Use the PassThru switch for greater detail on returned object.
-        Does not format or sort by design.
-
+        
       .EXAMPLE
-      $CredsESX = Get-Credential root
-      Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX
-      Save a credential to a variable and then connect to a single ESX host,
-      running the default commands in the function.
+      Invoke-EsxRunspace -VMHost esx01.lab.local -Credential (Get-Credential root)
+      
+      Get prompted for login information and then return a report for a single ESXi host.
 
       .EXAMPLE
       $CredsESX = Get-Credential root
       $EsxList = @('esx01.lab.local', 'esx02.lab.local', 'esx03.lab.local', 'esx04.lab.local')
-      Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
+      $report = Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
+
+      Save a credential to variable and then return a report for several ESXi hosts.
 
       .EXAMPLE
       $credsESX = Get-Credential root
@@ -56,6 +55,19 @@ Function Invoke-EsxRunspace {
       NumCpu        : 4
       ProcessorType : Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz
 
+      Use Get-Content to feed the Server parameter by pointing to a text file. The text file should have one vCenter Server name per line.
+
+      .Example
+      PS C:\> Get-Module -ListAvailable -Name @('PoshRSJob','VMware.PowerCLI') | select Name,Version
+
+      Name            Version
+      ----            -------
+      PoshRSJob       1.7.4.4
+      VMware.PowerCLI 11.0.0.10380590
+
+      This example tests the current client for the required modules. The script and parent module does checking for this as well. The version is not too important; latest is greatest.
+
+
       .INPUTS
       none
 
@@ -66,15 +78,15 @@ Function Invoke-EsxRunspace {
   [CmdletBinding()]
   Param(
 
-    #IP Address or DNS name of one or more VMware ESXi hosts.
+    #String. The IP Address or DNS name of one or more VMware ESXi hosts.
     [Alias('VMHostList')]
     [string[]]$VMHost,
 
-    #PSCredential.  Login for ESX (i.e. root).
+    #PSCredential. The login for ESXi.
     [Parameter(Mandatory)]
     [PSCredential]$Credential,
     
-    #Switch. Returns a small set of properties.
+    #Switch. Optionally, return only a small set of properties.
     [switch]$Brief,
     
     #Switch. Use the PassThru switch for greater detail on returned object.
@@ -83,53 +95,52 @@ Function Invoke-EsxRunspace {
 
   Process {
 
-    #Read in the VMHost parameter (one or more ESX hosts) to create VMHost list
-    [System.Collections.Queue]$ServerList = $null
-    $ServerList += $VMHost
- 
-    #Create a synchronized queue out of array
-    [System.Collections.Queue]$ServerList = [System.Collections.Queue]::Synchronized( ([System.Collections.Queue]$ServerList) )
-
-    #Create a synchronized array list for results
-    $Report = [System.Collections.ArrayList]::Synchronized( (New-Object -TypeName System.Collections.ArrayList) )
+    ## FAF array for results
+    $Report = [System.Collections.ArrayList]::Synchronized((New-Object -TypeName System.Collections.ArrayList))
 
     Start-RSJob -ScriptBlock {
       #requires -Module VMware.Vimautomation.Core
       [CmdletBinding()]
       param(
-        $ServerList,
-        $Report
+        [string[]]$VMHost,
+        [System.Collections.ArrayList]$Report
       )
+
+      Foreach($esx in $VMHost){
       
-      while ($ServerList.Count -gt 0) {
-      
-        #take one host from list at a time
-        $esx = $ServerList.Dequeue()
-      
-        #Connect to ESX
+        ## Connect to ESXi host
         try {
           $null = Connect-VIServer -Server $esx -Credential $Using:Credential -wa 0 -ea Stop
         }
         catch{
           Write-Error -Message ('{0}' -f $_.Exception.Message)
+          Write-Warning -Message ('Problem connecting to {0} (skipping)!' -f $esx)
+          Continue
         }
 
-        #Get the ESX Object and VM counts
-        $Script:EsxImpl = Get-VMHost -Server $esx
-        
+        ## Get the ESXi Object
+        try{
+          $EsxImpl = Get-VMHost -Server $esx -WarningAction Ignore -ErrorAction Stop
+        }
+        catch{
+          Write-Error -Message ('{0}' -f $_.Exception.Message)
+          Write-Warning -Message ('Problem enumerating ESXi host object for {0} (skipping)!' -f $esx)
+          Continue
+        }
+
         #Populate report object
         $Report.Add((New-Object -TypeName PSCustomObject -Property @{
-              Name                = $EsxImpl | Select-Object -ExpandProperty Name
-              State               = $EsxImpl.State
-              Version             = $EsxImpl.Version
-              Manufacturer        = $EsxImpl.Manufacturer
-              Model               = $EsxImpl.Model
-              MemoryTotalGB       = [int]$EsxImpl.MemoryTotalGB
-              NumCpu              = $EsxImpl.NumCpu
-              ProcessorType       = $EsxImpl.ProcessorType
+              Name                = [string]$EsxImpl.Name
+              State               = [string]$EsxImpl.State
+              Version             = [string]$EsxImpl.Version
+              Manufacturer        = [string]$EsxImpl.Manufacturer
+              Model               = [string]$EsxImpl.Model
+              MemoryTotalGB       = [int]$EsxImpl.MemoryTotalGB.ToString("#.#")
+              NumCpu              = [Int32]$EsxImpl.NumCpu
+              ProcessorType       = [string]($EsxImpl.ProcessorType.ToString() -replace '\s+', ' ')
         }))
 
-        #Disconnect from ESX
+        ## Session cleanup
         try{
           $null = Disconnect-VIServer -Server $esx -Confirm:$false -Force -ErrorAction Stop
         }
@@ -137,21 +148,20 @@ Function Invoke-EsxRunspace {
           Write-Error -Message ('{0}' -f $_.Exception.Message)
         }
       }
-    } -ArgumentList $ServerList, $Report | Wait-RSJob | Remove-RSJob
+    } -ArgumentList $VMHost, $Report | Wait-RSJob | Remove-RSJob
   
-    #Report results in any order
-    If($Report){
+    ## Handle output
+    If($null -ne $Report -and $Report.Count -ge 1){
       If($PassThru){
         return $Report
       }
       Else{
-        #Report results, brief
         If($Brief){
-          return $Report | Select-Object -Property Name,State,Version
+          $Report | Select-Object -Property Name,State,Version
         }
         Else{
-          #Report results, Default
-          return $Report | Select-Object -Property Name,State,Version,Manufacturer,Model,MemoryTotalGB,NumCpu,ProcessorType
+          ## Default output. Optionally, do some Format-List here, etc.
+          $Report | Select-Object -Property Name,State,Version,Manufacturer,Model,MemoryTotalGB,NumCpu,ProcessorType
         }
       }
     }
@@ -159,4 +169,4 @@ Function Invoke-EsxRunspace {
       Write-Warning -Message 'No report results!'
     }
   } #End Process
-} #End Process
+} #End Function

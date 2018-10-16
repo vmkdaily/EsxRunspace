@@ -1,7 +1,8 @@
 #### Introduction
 Welcome to the `EsxRunspace` module! This is an example framework for you to build upon.
-We make use of the `PoshRSJob` module to create a Runspace job for each ESX connection.
-This doesn't make it go faster (or maybe it does!).  Try it out.
+We make use of the `PoshRSJob` module to create a Runspace job for each VMware ESXi connection.
+This module has excellent memory management and uses one of the fastest array types in PowerShell.
+Also see the related module, VcRunspace to gather reports for vCenter Servers instead of ESXi hosts.
 
 #### Help
 ```
@@ -15,7 +16,7 @@ PS C:\> gcm -Module EsxRunspace
 
 CommandType     Name                                               Version    Source
 -----------     ----                                               -------    ------
-Function        Invoke-EsxRunspace                                 1.0.0.1    EsxRunspace
+Function        Invoke-EsxRunspace                                 1.0.0.2    EsxRunspace
 
 PS C:\>
 PS C:\> help Invoke-EsxRunspace -Full
@@ -31,13 +32,12 @@ SYNTAX
 
 
 DESCRIPTION
-    Connects to one or more VMware ESX hosts using PowerShell Runspace jobs.
-    Returns a default report with basic ESX info.
+    Connect to one or more VMware ESXi hosts using PowerShell Runspace jobs and return some basic information.
 
 
 PARAMETERS
     -VMHost <String[]>
-        String. IP Address or DNS Name of one or more ESX hosts.
+        String. The IP Address or DNS Name of one or more VMware ESXi hosts.
 
         Required?                    false
         Position?                    1
@@ -46,7 +46,7 @@ PARAMETERS
         Accept wildcard characters?  false
 
     -Credential <PSCredential>
-        PSCredential. The login credential for ESX.
+        PSCredential. The login for ESXi.
 
         Required?                    true
         Position?                    2
@@ -55,7 +55,7 @@ PARAMETERS
         Accept wildcard characters?  false
 
     -Brief [<SwitchParameter>]
-        Switch.  Returns a small set of properties (Name, Version, and State).
+        Switch. Optionally, return a small set of properties (i.e. Name, Version, and State).
 
         Required?                    false
         Position?                    named
@@ -65,7 +65,6 @@ PARAMETERS
 
     -PassThru [<SwitchParameter>]
         Switch. Use the PassThru switch for greater detail on returned object.
-        Does not format or sort by design.
 
         Required?                    false
         Position?                    named
@@ -77,7 +76,7 @@ PARAMETERS
         This cmdlet supports the common parameters: Verbose, Debug,
         ErrorAction, ErrorVariable, WarningAction, WarningVariable,
         OutBuffer, PipelineVariable, and OutVariable. For more information, see
-        about_CommonParameters (https:/go.microsoft.com/fwlink/?LinkID=113216).
+        about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 INPUTS
     none
@@ -102,11 +101,9 @@ NOTES
 
     -------------------------- EXAMPLE 1 --------------------------
 
-    PS C:\>$CredsESX = Get-Credential root
+    PS C:\>Invoke-EsxRunspace -VMHost esx01.lab.local -Credential (Get-Credential root)
 
-    Invoke-EsxRunspace -VMHost esx01.lab.local -Credential $credsESX
-    Save a credential to a variable and then connect to a single ESX host,
-    running the default commands in the function.
+    Get prompted for login information and then return a report for a single ESXi host.
 
 
 
@@ -116,7 +113,9 @@ NOTES
     PS C:\>$CredsESX = Get-Credential root
 
     $EsxList = @('esx01.lab.local', 'esx02.lab.local', 'esx03.lab.local', 'esx04.lab.local')
-    Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
+    $report = Invoke-EsxRunspace -VMHost $EsxList -Credential $credsESX
+
+    Save a credential to variable and then return a report for several ESXi hosts.
 
 
 
@@ -136,6 +135,22 @@ NOTES
     MemoryTotalGB : 64
     NumCpu        : 4
     ProcessorType : Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz
+
+    Use Get-Content to feed the Server parameter by pointing to a text file. The text file should have one vCenter Server name per line.
+
+
+
+
+    -------------------------- EXAMPLE 4 --------------------------
+
+    PS C:\>Get-Module -ListAvailable -Name @('PoshRSJob','VMware.PowerCLI') | select Name,Version
+
+    Name            Version
+    ----            -------
+    PoshRSJob       1.7.4.4
+    VMware.PowerCLI 11.0.0.10380590
+
+    This example tests the current client for the required modules. The script and parent module does checking for this as well. The version is not too important; latest is greatest.
 
 
 

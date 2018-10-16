@@ -2,8 +2,8 @@
     ===========================================================================
     Author:       	Mike Nisk
     Filename:     	EsxRunspace.psm1
-    Version:        1.0.0.1
-    Generated on:   08Oct2018
+    Version:        1.0.0.2
+    Generated on:   16Oct2018
     -------------------------------------------------------------------------
     Module Name:    Esxrunspace
     ===========================================================================
@@ -19,9 +19,7 @@ $Private = @( Get-ChildItem -Path $PSScriptRoot\private\*-*.ps1 -Recurse -ErrorA
 foreach ($FunctionFile in @($Public + $Private)) {
 
     try {
-
         . $FunctionFile.fullname
-
     }
     catch {
       Write-Error -Message "Failed to import function $($FunctionFile.fullname): $_"
